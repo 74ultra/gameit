@@ -25,4 +25,9 @@ public class OrgController {
     public ResponseEntity<? extends AbstractResponse> getOrg(@PathVariable(name = "orgId") Integer orgId){
         return orgService.getOrg(orgId);
     }
+
+    @GetMapping(value = "/all")
+    public ResponseEntity<? extends AbstractResponse> getAllOrgs(){
+        return orgService.getAllOrgs();
+    }
 }

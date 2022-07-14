@@ -27,6 +27,11 @@ public class GameController {
         return gameService.getGame(gameId, orgId);
     }
 
+    @GetMapping(value = "/{orgId}")
+    public ResponseEntity<? extends AbstractResponse> getAllOrgGames(@PathVariable(name = "orgId") Integer orgId){
+        return gameService.getOrgGames(orgId);
+    }
+
     @PutMapping(value = "/activate")
     public ResponseEntity<? extends AbstractResponse> activateGame(@RequestBody GameStatusDto gameStatusDto){
         return gameService.activateGame(gameStatusDto);

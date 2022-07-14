@@ -47,4 +47,8 @@ public class Game {
     // Use service to default to active
     @Column(name = "is_active")
     private boolean isActive;
+
+    public Integer getOrgId() {
+        return orgId;
+    }
 }

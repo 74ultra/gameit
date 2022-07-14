@@ -1,11 +1,14 @@
 package com.ignite.gameit.service;
 
+import com.ignite.gameit.dao.ActionDao;
 import com.ignite.gameit.dao.GameDao;
 import com.ignite.gameit.dao.OrgDao;
+import com.ignite.gameit.domain.Action;
 import com.ignite.gameit.domain.Game;
 import com.ignite.gameit.domain.Organization;
 import com.ignite.gameit.dto.game.GameReqDto;
 import com.ignite.gameit.dto.game.GameRespDto;
+import com.ignite.gameit.dto.game.GameRespWrapper;
 import com.ignite.gameit.dto.game.GameStatusDto;
 import com.ignite.gameit.utils.AbstractResponse;
 import com.ignite.gameit.utils.ResponseStatus;
@@ -15,13 +18,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class GameService {
 
     @Autowired
     private GameDao gameDao;
+
+    @Autowired
+    private ActionDao actionDao;
 
     @Autowired
     private OrgDao orgDao;
@@ -87,14 +96,19 @@ public class GameService {
         ResponseEntity responseEntity = null;
         try {
             Optional<Game> gameOpt = gameDao.findById(gameStatusDto.getGameId());
+            List<Action> gameActions = actionDao.findGameActions(gameStatusDto.getGameId());
+
             if(gameOpt.isEmpty()){
                 responseEntity = new ResponseEntity(new ResponseStatus("No game found with id " + gameStatusDto.getGameId()), HttpStatus.NOT_FOUND);
             }
             else if (gameOpt.get().getOrgId() != gameStatusDto.getOrgId()) {
-                responseEntity = new ResponseEntity(new ResponseStatus("Game with id " + gameStatusDto.getGameId() + " is not associated with your organization"), HttpStatus.NOT_FOUND);
+                responseEntity = new ResponseEntity(new ResponseStatus("No game with id " + gameStatusDto.getGameId() + " is associated with your organization"), HttpStatus.NOT_FOUND);
             }
             else if (gameOpt.get().getStartDate() != null){
                 responseEntity = new ResponseEntity(new ResponseStatus("Game with id " + gameStatusDto.getGameId() + " is already active"), HttpStatus.BAD_REQUEST);
+            }
+            else if(gameActions.isEmpty()){
+                responseEntity = new ResponseEntity(new ResponseStatus("Game with id " + gameStatusDto.getGameId() + " must have at least one associated action before it can be activated"), HttpStatus.BAD_REQUEST);
             }
             else {
                 Game game = gameOpt.get();
@@ -109,6 +123,38 @@ public class GameService {
             responseEntity = new ResponseEntity(new ResponseStatus("There was a problem updating the game status: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return responseEntity;
+    }
+
+    public ResponseEntity<? extends AbstractResponse> getOrgGames(Integer orgId){
+        ResponseEntity responseEntity = null;
+        try{
+            List<Game> allGames = gameDao.findAll();
+            List<Game> gamesList = allGames.stream().filter(g -> orgId.equals(g.getOrgId())).collect(Collectors.toList());
+            if(!gamesList.isEmpty()){
+                List<GameRespDto> gamesDtoList = gamesList.stream().map(g -> GameRespDto.builder().gameId(g.getId())
+                        .orgId(g.getOrgId()).title(g.getTitle())
+                        .startDate(g.getStartDate() == null ? null : dateToString(g.getStartDate()))
+                        .endDate(g.getEndDate() == null ? null : dateToString(g.getEndDate()))
+                        .createdDate(dateToString(g.getCreatedDate()))
+                        .desc(g.getDesc()).isActive(g.isActive()).build()
+                ).collect(Collectors.toList());
+
+                responseEntity = new ResponseEntity(new GameRespWrapper(gamesDtoList), HttpStatus.OK);
+            }
+            else{
+                responseEntity = new ResponseEntity(new ResponseStatus("No games found for org with id " + orgId), HttpStatus.NOT_FOUND);
+            }
+        }
+        catch (Exception e){
+            responseEntity = new ResponseEntity(new ResponseStatus("There was a problem retrieving games: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return responseEntity;
+    }
+
+    private String dateToString(Date date){
+        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy");
+        String dateString = sdf.format(date);
+        return dateString;
     }
 
 }

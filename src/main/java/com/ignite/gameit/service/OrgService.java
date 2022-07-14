@@ -2,6 +2,7 @@ package com.ignite.gameit.service;
 
 import com.ignite.gameit.dao.OrgDao;
 import com.ignite.gameit.domain.Organization;
+import com.ignite.gameit.dto.org.OrgListWrapper;
 import com.ignite.gameit.dto.org.OrgReqDto;
 import com.ignite.gameit.dto.org.OrgResponseDto;
 import com.ignite.gameit.utils.AbstractResponse;
@@ -11,8 +12,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class OrgService {
@@ -54,12 +57,7 @@ public class OrgService {
         Optional<Organization> orgOpt = orgDao.findById(orgId);
         if(orgOpt.isPresent()){
             Organization org = orgOpt.get();
-            OrgResponseDto orgResponseDto = OrgResponseDto.builder().id(org.getId()).orgName(org.getOrgName())
-                    .numGames(org.getNumGames()).numUsers(org.getNumUsers())
-                    .createdDate(org.getCreatedDate().toString())
-                    .isActive(org.isActive())
-                    .adminEmail(org.getAdminEmail())
-                    .orgCode(org.getOrgCode()).build();
+            OrgResponseDto orgResponseDto = mapToOrgDto(org);
 
             responseEntity = new ResponseEntity<>(orgResponseDto, HttpStatus.OK);
         }
@@ -67,6 +65,24 @@ public class OrgService {
             responseEntity = new ResponseEntity<>(new ResponseStatus("An organization with id " + orgId + " not found"), HttpStatus.NOT_FOUND);
         }
         return responseEntity;
+    }
+
+    public ResponseEntity<? extends AbstractResponse> getAllOrgs(){
+        List<Organization> orgList = orgDao.findAll();
+        if(!orgList.isEmpty()){
+            List<OrgResponseDto> orgRespDtoList = orgList.stream().map(o -> mapToOrgDto(o)).collect(Collectors.toList());
+            return new ResponseEntity<>(new OrgListWrapper(orgRespDtoList), HttpStatus.OK);
+        }
+        else return new ResponseEntity<>(new ResponseStatus("No organizations found"), HttpStatus.NOT_FOUND);
+    }
+
+    private OrgResponseDto mapToOrgDto(Organization org){
+        return OrgResponseDto.builder().id(org.getId()).orgName(org.getOrgName())
+                .numGames(org.getNumGames()).numUsers(org.getNumUsers())
+                .createdDate(org.getCreatedDate().toString())
+                .isActive(org.isActive())
+                .adminEmail(org.getAdminEmail())
+                .orgCode(org.getOrgCode()).build();
     }
 
 }
