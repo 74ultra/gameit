@@ -17,4 +17,8 @@ public interface UserDao extends JpaRepository<User, Integer> {
 
     @Query(nativeQuery = true, value = "SELECT * FROM user WHERE email = :email AND org_id = :orgId")
     Optional<User> findByEmailAndOrgId(@Param(value = "email") String email, @Param(value = "orgId") Integer orgId);
+
+    @Query(nativeQuery = true, value = "SELECT COUNT(id) FROM user WHERE org_id = :orgId")
+    Integer findNumUsersByOrgId(@Param(value = "orgId") Integer orgId);
+
 }

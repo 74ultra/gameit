@@ -2,6 +2,7 @@ package com.ignite.gameit.controller;
 
 import com.ignite.gameit.dto.action.ActionReqDto;
 import com.ignite.gameit.dto.action.PointsRequest;
+import com.ignite.gameit.dto.action.TopGameUsersReq;
 import com.ignite.gameit.service.ActionService;
 import com.ignite.gameit.utils.AbstractResponse;
 import lombok.AllArgsConstructor;
@@ -35,5 +36,10 @@ public class ActionController {
     @GetMapping(value = "/points")
     public ResponseEntity<? extends AbstractResponse> getUserPoints(@RequestParam(value = "userId") Integer userId, @RequestParam(value = "gameId") Integer gameId){
         return actionService.getUserPoints(userId, gameId);
+    }
+
+    @GetMapping(value = "/top/{numResults}")
+    public ResponseEntity<? extends AbstractResponse> getTopGameUsers(@RequestBody TopGameUsersReq topGameUsersReq, @PathVariable(value = "numResults", required = false) Integer numResults){
+        return actionService.findTopUsers(topGameUsersReq, numResults);
     }
 }

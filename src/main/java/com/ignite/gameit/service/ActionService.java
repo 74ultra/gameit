@@ -150,10 +150,7 @@ public class ActionService {
 
         if(userPointsOpt.isPresent()){
             UserPoints userPoints = userPointsOpt.get();
-            UserPointsDto userPointsDto = UserPointsDto.builder().userId(userId).gameId(userPoints.getGameId()).orgId(userPoints.getOrgId())
-                    .gamePoints(userPoints.getGamePoints())
-                    .lastUpdated(dateToString(userPoints.getLastUpdatedDate()))
-                    .build();
+            UserPointsDto userPointsDto = mapToUserPointsDto(userPoints);
 
             responseEntity = new ResponseEntity(userPointsDto, HttpStatus.OK);
         }
@@ -161,6 +158,53 @@ public class ActionService {
             responseEntity = new ResponseEntity(new ResponseStatus("User has not logged any points for this game"), HttpStatus.NOT_FOUND);
         }
         return responseEntity;
+    }
+
+    public ResponseEntity<? extends AbstractResponse> findTopUsers(TopGameUsersReq topGameUsersReq, Integer numResults){
+        ResponseEntity responseEntity = null;
+        Integer gameId = topGameUsersReq.getGameId();
+        Integer orgId = topGameUsersReq.getOrgId();
+        Integer res = numResults;
+
+        if(numResults == null || numResults <= 0){
+            Integer numUsers = userDao.findNumUsersByOrgId(orgId);
+            numResults = numUsers;
+        }
+
+        List<UserPoints> topUserPointsList = pointsDao.findTopUsersByGameIdAndOrgId(gameId, orgId, numResults);
+        if(!topUserPointsList.isEmpty()){
+            List<UserInfoPointsDto> topUsersDtoList = topUserPointsList.stream().map(up -> mapToUserInfoPtsDto(up)).collect(Collectors.toList());
+            responseEntity = new ResponseEntity<>(new UserPointsListWrapper(topUsersDtoList), HttpStatus.OK);
+        }
+        else responseEntity = new ResponseEntity<>(new ResponseStatus("No users found for organization id: " + orgId), HttpStatus.NOT_FOUND);
+
+        return responseEntity;
+    }
+
+    private UserInfoPointsDto mapToUserInfoPtsDto(UserPoints userPoints){
+        Optional<User> userOpt = userDao.findById(userPoints.getUserId());
+        if(userOpt.isPresent()){
+            User user = userOpt.get();
+            return UserInfoPointsDto.builder().userId(userPoints.getUserId())
+                    .firstName(user.getFirstName())
+                    .lastName(user.getLastName())
+                    .email(user.getEmail())
+                    .deptId(user.getDeptId())
+                    .jobId(user.getJobId())
+                    .gameId(userPoints.getGameId())
+                    .gamePoints(userPoints.getGamePoints())
+                    .dateLastUpdated(dateToString(userPoints.getLastUpdatedDate()))
+                    .build();
+        }
+        else return new UserInfoPointsDto();
+    }
+
+
+    private UserPointsDto mapToUserPointsDto(UserPoints userPoints){
+        return UserPointsDto.builder().userId(userPoints.getUserId()).gameId(userPoints.getGameId()).orgId(userPoints.getOrgId())
+                .gamePoints(userPoints.getGamePoints())
+                .lastUpdated(dateToString(userPoints.getLastUpdatedDate()))
+                .build();
     }
 
     private String dateToString(Date date){
