@@ -6,14 +6,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.Date;
 
 @Entity
-@Table
+@Table(name = "user_points")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,6 +21,7 @@ public class UserPoints {
 
     @Id
     @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Integer id;
 
     @Column(name = "game_id")
@@ -38,4 +38,8 @@ public class UserPoints {
 
     @Column(name = "game_points")
     private Integer gamePoints;
+
+    @Column(name = "last_updated")
+    @UpdateTimestamp
+    private Date lastUpdatedDate;
 }

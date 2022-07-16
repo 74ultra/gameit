@@ -5,11 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.Date;
 
 @Entity
 @Table
@@ -21,6 +20,7 @@ public class UserAction {
 
     @Id
     @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Integer id;
 
     @Column(name = "user_id")
@@ -34,5 +34,9 @@ public class UserAction {
     @Column(name = "point_value")
     @NotNull
     private Integer pointValue;
+
+    @Column(name = "created_date")
+    @CreationTimestamp
+    private Date lastUpdatedDate;
 
 }
