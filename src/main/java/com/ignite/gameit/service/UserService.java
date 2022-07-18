@@ -39,7 +39,6 @@ public class UserService {
             responseEntity = new ResponseEntity(new ResponseStatus("A user associated with this organization with email " + userOpt.get().getEmail() + " already exists"), HttpStatus.BAD_REQUEST);
         }
         else{
-            System.out.println(userReqDto.toString());
             try {
                 User newUser = User.builder().orgId(userReqDto.getOrgId()).firstName(userReqDto.getFirstName())
                         .lastName(userReqDto.getLastName()).email(userReqDto.getEmail())
